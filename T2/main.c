@@ -30,8 +30,8 @@ double norm_1(double* arr, int n, void* data);
 double norm_2(double* arr, int n, void* data);
 double norm_3(double* arr, int n, void* data);
 
-int dyn_alloc_2(int ***data, int n, int m);
-void dyn_free_2(int **data, int n);
+int dyn_alloc_2(double ***data, int n, int m);
+void dyn_free_2(double **data, int n);
 
 
 
@@ -123,13 +123,13 @@ struct vectors max_vector_norms(int n, int vector_count, int norm_count, ...)
     if (!vector_check(res) || vector_count < 1 || norm_count < 1 || n < 1)
         return res;
 
-    double **all_vecs = malloc(n * sizeof(double *));
+    double **all_vecs = malloc(vector_count * sizeof(double *));
     if (all_vecs == NULL)
     {
         vector_free(&res);
         return res;
     }
-    int *indicies = malloc(n * sizeof(int));
+    int *indicies = malloc(vector_count * sizeof(int));
     int ind_written;
     if (indicies == NULL)
     {
@@ -164,7 +164,7 @@ struct vectors max_vector_norms(int n, int vector_count, int norm_count, ...)
             } else if (length > max_length)
             {
                 max_length = length;
-                indicies[0] = i;
+                indicies[0] = j;
                 ind_written = 1;
             }
         }
@@ -253,12 +253,12 @@ void matix_vec_prod(double **matrix, double *vec, double* res, int n)
     }
 }
 
-int dyn_alloc_2(int ***data, int n, int m) {
-    *data = malloc(n * sizeof(int *));
+int dyn_alloc_2(double ***data, int n, int m) {
+    *data = malloc(n * sizeof(double *));
     if (*data == NULL) return -1;
 
     for (int i = 0; i < n; ++i) {
-        (*data)[i] = malloc(m * sizeof(int));
+        (*data)[i] = malloc(m * sizeof(double));
         if ((*data)[i] == NULL) {
             for (int j = 0; j < i; ++j) free((*data)[i]);
             free(*data);
@@ -269,7 +269,7 @@ int dyn_alloc_2(int ***data, int n, int m) {
     return 0;
 }
 
-void dyn_free_2(int **data, int n) {
+void dyn_free_2(double **data, int n) {
     for (int i = 0; i < n; ++i) {
         free(data[i]);
     }
