@@ -5,9 +5,13 @@
 #include <stdio.h>
 #include <string.h>
 
+#define WORD_LENGTH 40
+#define STR2(x) #x
+#define STR(X) STR2(X)
+
 struct item
 {
-    char word[40];
+    char word[WORD_LENGTH + 1];
     int length;
     int count;
 };
@@ -104,8 +108,8 @@ int main(int argc, char *argv[])
         {
             case GET:
             {
-                char word[40];
-                scanf("%39s", word);
+                char word[WORD_LENGTH + 1];
+                scanf("%" STR(WORD_LENGTH) "s", word);
                 struct item *data = find(tree_head, word);
                 if (data != NULL)
                     printf("Word %s has %d ascensions\n", word, data->count);
@@ -209,7 +213,7 @@ struct node* parse_text(char* filepath, int sep_count, char* separators)
         return NULL;
     }
 
-    char token[40];
+    char token[WORD_LENGTH + 1];
     int length;
 
     char c = fgetc(in);
@@ -248,7 +252,7 @@ int get_token(FILE* in, char* token, int sep_count, char* separators, char* c)
     while (is_in(*c, sep_count, separators) && *c != EOF)
         *c = fgetc(in);
 
-    while(length < 39 && !is_in(*c, sep_count, separators) && *c != EOF)
+    while(length < WORD_LENGTH && !is_in(*c, sep_count, separators) && *c != EOF)
     {
         token[length] = *c;
         ++length;
