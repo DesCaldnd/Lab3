@@ -5,6 +5,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 enum stop_type
 { START, PASS, FINISH };
@@ -33,8 +34,17 @@ void do_min(struct list_list_bus list, enum command_type c_type);
 
 void free_list(struct list_bus* list, void*);
 
+void find_path_length(struct list_list_bus list, int is_max);
+void find_route_count(struct list_list_bus list, int is_max);
+void find_route_length(struct list_list_bus list, int is_max);
+void find_stop_length(struct list_list_bus list, int is_max);
+void find_stay_length(struct list_list_bus list, int is_max);
+
 int cmpf_insert_buses(struct list_bus lhs, struct list_bus rhs);
 int less_time(struct bus lhs, struct bus rhs);
+
+void print_l_list(struct list_bus *list, void*);
+void print_list(struct bus *b, void*);
 
 int main(int argc, char *argv[])
 {
@@ -68,11 +78,13 @@ int main(int argc, char *argv[])
         }
     }
 
-    char qual[4], comm[20];
+//    for_all_list_list_bus(gen_list, &print_l_list, NULL);
+
+    char qual[5], comm[20];
     enum command_type q_type, c_type;
     do
     {
-        scanf("%3s %19s", qual, comm);
+        scanf("%4s %19s", qual, comm);
         q_type = get_command_type(qual);
         c_type = get_command_type(comm);
         if (q_type != UNDEF && q_type != QUIT && (q_type == MAX || q_type == MIN) && c_type != UNDEF && c_type != QUIT && c_type != MAX && c_type != MIN)
@@ -161,7 +173,7 @@ void parse_file(struct list_list_bus* list, FILE* in)
         if(!is_list_empty_bus(in_node->data))
         {
             struct node_bus* tmp_node = insert_node->next;
-            while (less_time(data, tmp_node->data) && tmp_node != NULL)
+            while (tmp_node != NULL && less_time(tmp_node->data, data))
             {
                 insert_node = tmp_node;
                 tmp_node = tmp_node->next;
@@ -202,12 +214,66 @@ enum command_type get_command_type(char *str)
 
 void do_max(struct list_list_bus list, enum command_type c_type)
 {
-
+    switch (c_type)
+    {
+        case ROUTE_COUNT:
+        {
+            find_route_count(list, 1);
+            break;
+        }
+        case PATH_LENGTH:
+        {
+            find_path_length(list, 1);
+            break;
+        }
+        case ROUTE_LENGTH:
+        {
+            find_route_length(list, 1);
+            break;
+        }
+        case STOP_LENGTH:
+        {
+            find_stop_length(list, 1);
+            break;
+        }
+        case STAY_LENGTH:
+        {
+            find_stay_length(list, 1);
+            break;
+        }
+    }
 }
 
 void do_min(struct list_list_bus list, enum command_type c_type)
 {
-
+    switch (c_type)
+    {
+        case ROUTE_COUNT:
+        {
+            find_route_count(list, 0);
+            break;
+        }
+        case PATH_LENGTH:
+        {
+            find_path_length(list, 0);
+            break;
+        }
+        case ROUTE_LENGTH:
+        {
+            find_route_length(list, 0);
+            break;
+        }
+        case STOP_LENGTH:
+        {
+            find_stop_length(list, 0);
+            break;
+        }
+        case STAY_LENGTH:
+        {
+            find_stay_length(list, 0);
+            break;
+        }
+    }
 }
 
 void free_list(struct list_bus* list, void*)
@@ -217,11 +283,210 @@ void free_list(struct list_bus* list, void*)
 
 int cmpf_insert_buses(struct list_bus lhs, struct list_bus rhs)
 {
-    return strncmp(lhs.begin->data.id, rhs.begin->data.id, 7) == -1;
+    return strncmp(lhs.begin->next->data.id, rhs.begin->next->data.id, 6) == 0;
 }
 
 int less_time(struct bus lhs, struct bus rhs)
 {
     time_t l = mktime(&lhs.st_time), r = mktime(&rhs.st_time);
     return difftime(l, r) < 0;
+}
+
+void print_l_list(struct list_bus *list, void*)
+{
+    for_all_list_bus(*list, &print_list, NULL);
+    printf("\n");
+}
+
+void print_list(struct bus *b, void*)
+{
+    printf("%6s ", b->id);
+}
+
+double path_length(struct list_bus list)
+{
+    struct node_bus* node = list.begin->next;
+    double x = node->data.station_x, y = node->data.station_y, res = 0;
+    node = node->next;
+    while (node != NULL)
+    {
+        res += sqrt((x-node->data.station_x) * (x-node->data.station_x) + (y-node->data.station_y) * (y-node->data.station_y));
+        x = node->data.station_x;
+        y = node->data.station_y;
+        node = node->next;
+    }
+    return res;
+}
+
+void find_path_length(struct list_list_bus list, int is_max)
+{
+    struct node_list_bus* node = list.begin->next, *res_n = node;
+    double res = path_length(node->data);
+    node = node->next;
+
+    while (node != NULL)
+    {
+        double tmp = path_length(node->data);
+        if ((is_max && tmp > res) || (!is_max && tmp < res))
+        {
+            res = tmp;
+            res_n = node;
+        }
+        node = node->next;
+    }
+    printf("%s path length = %lf at %6s bus\n", is_max ? "Maximum" : "Minimum", res, res_n->data.begin->next->data.id);
+}
+
+int route_count(struct list_bus list)
+{
+    struct node_bus* node = list.begin->next;
+    int res = 0, started = 0;
+    while (node != NULL)
+    {
+        if (node->data.type == START)
+            started = 1;
+        else if (node->data.type == FINISH && started)
+        {
+            started = 0;
+            ++res;
+        }
+        node = node->next;
+    }
+    return res;
+}
+
+void find_route_count(struct list_list_bus list, int is_max)
+{
+    struct node_list_bus* node = list.begin->next, *res_n = node;
+    int res = route_count(node->data);
+    node = node->next;
+
+    while (node != NULL)
+    {
+        int tmp = route_count(node->data);
+        if ((is_max && tmp > res) || (!is_max && tmp < res))
+        {
+            res = tmp;
+            res_n = node;
+        }
+        node = node->next;
+    }
+    printf("%s route count = %d at %6s bus\n", is_max ? "Maximum" : "Minimum", res, res_n->data.begin->next->data.id);
+}
+
+double route_length(struct list_bus list, int is_max)
+{
+    struct node_bus* node = list.begin->next;
+    double x = node->data.station_x, y = node->data.station_y, len = 0, res = 0;
+    int calculated = 0, started = 1;
+    node = node->next;
+    while (node != NULL)
+    {
+        if (started)
+            len += sqrt((x-node->data.station_x) * (x-node->data.station_x) + (y-node->data.station_y) * (y-node->data.station_y));
+        if (node->data.type == START)
+            started = 1;
+        else if (node->data.type == FINISH)
+        {
+            if ((is_max && len > res) || (!is_max && len < res) || !calculated)
+            {
+                calculated = 1;
+                res = len;
+            }
+            len = 0;
+            started = 0;
+        }
+        x = node->data.station_x;
+        y = node->data.station_y;
+        node = node->next;
+    }
+    return res;
+}
+
+void find_route_length(struct list_list_bus list, int is_max)
+{
+    struct node_list_bus* node = list.begin->next, *res_n = node;
+    double res = route_length(node->data, is_max);
+    node = node->next;
+
+    while (node != NULL)
+    {
+        double tmp = route_length(node->data, is_max);
+        if ((is_max && tmp > res) || (!is_max && tmp < res))
+        {
+            res = tmp;
+            res_n = node;
+        }
+        node = node->next;
+    }
+    printf("%s route length = %lf at %6s bus\n", is_max ? "Maximum" : "Minimum", res, res_n->data.begin->next->data.id);
+}
+
+double stop_length(struct list_bus list, int is_max)
+{
+    struct node_bus* node = list.begin->next;
+    time_t st = mktime(&node->data.st_time), end = mktime(&node->data.end_time);
+    double res = difftime(end, st);
+    node = node->next;
+    while (node != NULL)
+    {
+        st = mktime(&node->data.st_time), end = mktime(&node->data.end_time);
+        double tmp = difftime(end, st);
+        if ((is_max && tmp > res) || (!is_max && tmp < res))
+            res = tmp;
+        node = node->next;
+    }
+    return res;
+}
+
+void find_stop_length(struct list_list_bus list, int is_max)
+{
+    struct node_list_bus* node = list.begin->next, *res_n = node;
+    double res = stop_length(node->data, is_max);
+    node = node->next;
+
+    while (node != NULL)
+    {
+        double tmp = stop_length(node->data, is_max);
+        if ((is_max && tmp > res) || (!is_max && tmp < res))
+        {
+            res = tmp;
+            res_n = node;
+        }
+        node = node->next;
+    }
+    printf("%s stop length = %.1lf sec at %6s bus\n", is_max ? "Maximum" : "Minimum", res, res_n->data.begin->next->data.id);
+}
+
+double stay_length(struct list_bus list)
+{
+    struct node_bus* node = list.begin->next;
+    time_t st, end;
+    double res = 0;
+    while (node != NULL)
+    {
+        st = mktime(&node->data.st_time), end = mktime(&node->data.end_time);
+        res += difftime(end, st);
+        node = node->next;
+    }
+    return res;
+}
+
+void find_stay_length(struct list_list_bus list, int is_max)
+{
+    struct node_list_bus* node = list.begin->next, *res_n = node;
+    double res = stay_length(node->data);
+    node = node->next;
+
+    while (node != NULL)
+    {
+        double tmp = stay_length(node->data);
+        if ((is_max && tmp > res) || (!is_max && tmp < res))
+        {
+            res = tmp;
+            res_n = node;
+        }
+        node = node->next;
+    }
+    printf("%s stay length = %.1lf sec at %6s bus\n", is_max ? "Maximum" : "Minimum", res, res_n->data.begin->next->data.id);
 }

@@ -77,7 +77,7 @@ int size_list_##type(struct list_##type list)    \
 struct node_##type* find_list_##type(struct list_##type list, st_type data, int (*cmpf)(st_type, st_type))              \
 {                                                \
     struct node_##type* node = list.begin->next; \
-    while(node != NULL && (cmpf(node->data, data) || cmpf(data, node->data)))    \
+    while(node != NULL && (!cmpf(node->data, data)))    \
     {                                            \
         node = node->next;                                             \
     }                                            \
