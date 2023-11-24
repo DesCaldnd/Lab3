@@ -7,5 +7,6 @@ if (NOT MSVC)
 endif ()
 
 add_executable(Task2 T2/main.c)
-add_executable(Task6 T6/structs.h T6/main.c)
+add_executable(Task4 T4/main.c structs.h structs.c)
+add_executable(Task6 structs.h T6/main.c)
 add_executable(Task9 T9/main.c)

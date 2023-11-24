@@ -1,7 +1,7 @@
 //
 // Created by Des Caldnd on 11/21/2023.
 //
-#include "structs.h"
+#include "../structs.h"
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
