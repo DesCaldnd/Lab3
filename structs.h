@@ -230,7 +230,7 @@ struct String
 
 struct String init_string(const char *src);
 
-struct String init_string_from_stream(FILE* stream, int (*is_needed_sym)(char));
+struct String init_string_from_stream(FILE* stream, int (*is_needed_sym)(int));
 
 void destroy_string(struct String *data);
 

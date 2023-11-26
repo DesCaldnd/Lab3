@@ -20,7 +20,7 @@ struct String init_string(const char* src)
     return res;
 }
 
-struct String init_string_from_stream(FILE* stream, int (*is_needed_sym)(char))
+struct String init_string_from_stream(FILE* stream, int (*is_needed_sym)(int))
 {
     struct String res;
     res.data = malloc(sizeof(char) * 10);
@@ -36,6 +36,9 @@ struct String init_string_from_stream(FILE* stream, int (*is_needed_sym)(char))
 
     char c;
     fscanf(stream, "%c", &c);
+
+    while(!is_needed_sym(c))
+        fscanf(stream, "%c", &c);
 
     while (is_needed_sym(c))
     {
