@@ -121,20 +121,44 @@ int is_empty_vector_##type(struct vector_##type* vector)\
 int is_valid_vector_##type(struct vector_##type* vector)\
 {\
     return vector->data != NULL;\
-}\
+}                                                 \
 \
-void realloc_vector_##type(struct vector_##type* vector, size_t size)\
+void for_all_vector_##type(struct vector_##type* vector, void (*func)(st_type*, void*), void* opt_data)\
 {\
-    vector->data = realloc(vector->data, sizeof(st_type) * size);\
-    if (vector->size > size)\
-        vector->size = size;\
-    vector->capacity = size;\
+    for (int i = 0; i < vector->size; ++i)\
+    {\
+        func(&vector->data[i], opt_data);\
+    }\
+}                                                 \
+\
+void realloc_vector_##type(struct vector_##type* vector, size_t size, void (*deleter)(st_type*, void*))\
+{                                                 \
+    st_type* tmp = malloc(sizeof(st_type) * size);\
+    if (tmp == NULL)                              \
+    {                                             \
+        for_all_vector_##type(vector, deleter, NULL); \
+        free(vector->data);                       \
+        vector->size = 0;                         \
+        vector->capacity = 0;                     \
+        vector->data = NULL;\
+    } else                                        \
+    {\
+        if (vector->size > size)\
+            vector->size = size;\
+        vector->capacity = size;                  \
+        for (size_t i = 0; i < vector->size; ++i)    \
+        {                                         \
+            tmp[i] = vector->data[i];                                          \
+        }                                         \
+        free(vector->data);                       \
+        vector->data = tmp;\
+    }\
 }\
 \
-void push_vector_##type(struct vector_##type* vector, st_type data)\
+void push_vector_##type(struct vector_##type* vector, st_type data, void (*deleter)(st_type*, void*))\
 {\
     if (vector->size >= vector->capacity)\
-        realloc_vector_##type(vector, vector->capacity * 2);\
+        realloc_vector_##type(vector, vector->capacity * 2, deleter);\
 \
     if (is_valid_vector_##type(vector))\
     {\
@@ -160,10 +184,10 @@ void destroy_vector_##type(struct vector_##type* vector)\
     vector->data = NULL;\
 }\
 \
-void insert_vector_##type(struct vector_##type* vector, st_type data, size_t ind)\
+void insert_vector_##type(struct vector_##type* vector, st_type data, size_t ind, void (*deleter)(st_type*, void*))\
 {\
     if (vector->size >= vector->capacity)\
-        realloc_vector_##type(vector, vector->capacity * 2);\
+        realloc_vector_##type(vector, vector->capacity * 2, deleter);\
 \
     if (is_valid_vector_##type(vector))\
     {\
@@ -190,14 +214,6 @@ void remove_vector_##type(struct vector_##type* vector, size_t ind)\
         vector->data[i] = vector->data[i + 1];\
     }\
     --vector->size;\
-}\
-\
-void for_all_vector_##type(struct vector_##type* vector, void (*func)(st_type*, void*), void* opt_data)\
-{\
-    for (int i = 0; i < vector->size; ++i)\
-    {\
-        func(&vector->data[i], opt_data);\
-    }\
 }\
 \
 st_type* find_vector_##type(struct vector_##type* vector, st_type data, int (*comp)(st_type, st_type))\

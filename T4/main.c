@@ -3,8 +3,6 @@
 //
 #include "../structs.h"
 #include <stdio.h>
-#include <math.h>
-#include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
@@ -61,7 +59,7 @@ int main()
     post.mails = init_vector_Mail(10);
     char post_id[] = "aaaaaaaaaaaaaa";
 
-    if(is_valid_vector_Mail(&post.mails))
+    if(!is_valid_vector_Mail(&post.mails))
     {
         printf("Bad alloc\n");
         return 0;
@@ -71,6 +69,7 @@ int main()
     int status = configure_address(&post_address);
     if (!status)
     {
+        destroy_vector_Mail(&post.mails);
         printf("Bad alloc\n");
         return 0;
     }
@@ -78,7 +77,7 @@ int main()
     post.post_address = &post_address;
 
     char prompt[15];
-    printf("Enter command: ");
+    printf("\nEnter command: ");
     scanf("%14s", prompt);
     enum command_type type = get_command_type(prompt);
 
@@ -135,7 +134,7 @@ int main()
             printf("Bad alloc\n");
             return 0;
         }
-        printf("Enter command: ");
+        printf("\nEnter command: ");
         scanf("%14s", prompt);
         type = get_command_type(prompt);
     }
@@ -175,8 +174,17 @@ int configure_address(struct Address* address)
     address->street = init_string_from_stream(stdin, &isalpha);
     printf("Enter house number: ");
     int counter = scanf("%d", &address->house_num);
-    printf("Enter building: ");
-    address->building = init_string_from_stream(stdin, &isalnum);
+    int is_building = 0;
+    printf("Is building required: ");
+    scanf("%d", &is_building);
+    if(is_building)
+    {
+        printf("Enter building: ");
+        address->building = init_string_from_stream(stdin, &isalnum);
+    } else
+    {
+        address->building = init_string("");
+    }
     printf("Enter flat number: ");
     counter += scanf("%d", &address->flat_num);
     printf("Enter reciever index (6 char): ");
@@ -254,10 +262,10 @@ void create_mail(struct Post* post, char* id)
     strcpy(mail.post_id, id);
     increment_post_id(id);
 
-    push_vector_Mail(&post->mails, mail);
+    push_vector_Mail(&post->mails, mail, &delete_mail);
     if (is_valid_vector_Mail(&post->mails))
     {
-        printf("Successfully created! Mail id is %14s\n", mail.post_id);
+        printf("Successfully created! Mail id is \"%14s\"\n", mail.post_id);
     } else
     {
         printf("Error while creating!\n");
@@ -385,8 +393,12 @@ void print_mail(struct Mail* mail, void*)
 
 void print_address(struct Address address)
 {
-    printf("City: %s\nStreet: %s\nHouse number: %d\nBuilding: %s\nFlat number: %d\nReciever index: %s", address.city.data,
+    if (address.building.size > 0)
+    printf("City: %s\nStreet: %s\nHouse number: %d\nBuilding: %s\nFlat number: %d\nReciever index: %s\n", address.city.data,
            address.street.data, address.house_num, address.building.data, address.flat_num, address.reciever_ind);
+    else
+        printf("City: %s\nStreet: %s\nHouse number: %d\nFlat number: %d\nReciever index: %s\n", address.city.data,
+               address.street.data, address.house_num, address.flat_num, address.reciever_ind);
 }
 
 int mail_eq_id(struct Mail lhs, struct Mail rhs)

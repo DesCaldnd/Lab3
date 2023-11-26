@@ -35,9 +35,9 @@ struct String init_string_from_stream(FILE* stream, int (*is_needed_sym)(int))
     }
 
     char c;
-    fscanf(stream, "%c", &c);
 
-    while(!is_needed_sym(c))
+    fscanf(stream, "%c", &c);
+    while (!is_needed_sym(c))
         fscanf(stream, "%c", &c);
 
     while (is_needed_sym(c))
@@ -48,6 +48,7 @@ struct String init_string_from_stream(FILE* stream, int (*is_needed_sym)(int))
             destroy_string(&res);
             return res;
         }
+        fscanf(stream, "%c", &c);
     }
 
     return res;
