@@ -20,6 +20,21 @@ struct String init_string(const char* src)
     return res;
 }
 
+struct String init_string_size(size_t size)
+{
+    struct String res;
+    res.data = malloc(sizeof(char) * size);
+    res.size = 0;
+    if (res.data != NULL)
+    {
+        res.capacity = size;
+        res.data[0] = '\0';
+    }
+    else
+        res.capacity = 0;
+    return res;
+}
+
 struct String init_string_from_stream(FILE* stream, int (*is_needed_sym)(int))
 {
     struct String res;
@@ -58,6 +73,7 @@ void destroy_string(struct String *data)
 {
     if (data->data != NULL)
         free(data->data);
+    data->data = NULL;
     data->size = 0;
     data->capacity = 0;
 }
