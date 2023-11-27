@@ -52,7 +52,7 @@ struct String init_string_from_stream(FILE* stream, int (*is_needed_sym)(int))
     char c;
 
     fscanf(stream, "%c", &c);
-    while (!is_needed_sym(c))
+    while (!is_needed_sym(c) && c != EOF && c != '\0')
         fscanf(stream, "%c", &c);
 
     while (is_needed_sym(c))
