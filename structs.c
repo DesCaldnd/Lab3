@@ -83,6 +83,11 @@ int is_valid_string(struct String* data)
     return data->data != NULL && data->capacity > 0;
 }
 
+int is_empty_string(struct String *data)
+{
+    return data->size <= 0;
+}
+
 void realloc_string(struct String* data, int size)
 {
     data->data = realloc(data->data, sizeof(char) * size);

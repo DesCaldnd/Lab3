@@ -233,7 +233,7 @@ st_type* find_vector_##type(struct vector_##type* vector, st_type data, int (*co
 size_t size_vector_##type(struct vector_##type* vector)\
 {\
     return vector->size;\
-}\
+}
 
 
 //---------------------------------------------------------
@@ -253,6 +253,8 @@ struct String init_string_from_stream(FILE* stream, int (*is_needed_sym)(int));
 void destroy_string(struct String *data);
 
 int is_valid_string(struct String *data);
+
+int is_empty_string(struct String *data);
 
 void realloc_string(struct String *data, int size);
 
