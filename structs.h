@@ -52,6 +52,15 @@ struct node_##type* insert_list_##type(struct node_##type *node, st_type data)  
     return tmp;\
 }                                                \
                                                  \
+void remove_list_##type(struct node_##type *node)             \
+{                                                \
+    if (node->next == NULL)                      \
+        return;\
+    struct node_##type* tmp = node->next;         \
+    node->next = node->next->next;               \
+    free(tmp);\
+}\
+                                                 \
 void destroy_list_##type(struct list_##type *list)                          \
 {                                                \
     struct node_##type *node = list->begin;       \
@@ -250,6 +259,8 @@ struct String init_string_size(size_t size);
 
 struct String init_string_from_stream(FILE* stream, int (*is_needed_sym)(int));
 
+struct String init_string_from_stream_no_skip(FILE* stream, int (*is_needed_sym)(int));
+
 void destroy_string(struct String *data);
 
 int is_valid_string(struct String *data);
@@ -269,5 +280,159 @@ int cmp_string(struct String *lhs, struct String *rhs);
 void cpy_string(struct String *dest, const struct String *src);
 
 struct String *cpy_dyn_string(const struct String *src);
+
+//----------------------------------------------------------------------------
+
+#define DEQUE(type, st_type) struct deque_##type\
+{\
+    st_type *data;\
+    size_t size, capacity, start;\
+};\
+\
+struct deque_##type init_deque_##type(size_t size)\
+{\
+    struct deque_##type deque;\
+    if (size == 0)\
+        size = 1;\
+    deque.data = malloc(size * sizeof(st_type));\
+    deque.size = 0;\
+    deque.start = 0;\
+    deque.capacity = deque.data == NULL ? 0 : size;\
+    return deque;\
+}\
+\
+st_type *get_deque_##type(struct deque_##type* deque, size_t index)\
+{\
+    return &deque->data[(index + deque->start) % deque->capacity];\
+}\
+\
+void for_all_deque_##type(struct deque_##type* deque, void (*func)(st_type*, void*), void* opt_data)\
+{\
+    for (size_t i = 0; i < deque->size; ++i)\
+    {\
+        func(get_deque_##type(deque, i), opt_data);\
+    }\
+}\
+\
+void destroy_deque_##type(struct deque_##type* deque)\
+{\
+    if (deque->data != NULL)\
+    {\
+        free(deque->data);\
+        deque->data = NULL;\
+    }\
+    deque->start = 0;\
+    deque->size = 0;\
+    deque->capacity = 0;\
+}\
+\
+void realloc_deque_##type(struct deque_##type* deque, size_t size, void (*deleter)(st_type*, void*))\
+{\
+    st_type * tmp = malloc(sizeof(st_type) * size);\
+    if (tmp == NULL)\
+    {\
+        for_all_deque_##type(deque, deleter, NULL);\
+        destroy_deque_##type(deque);\
+    } else\
+    {\
+        for (size_t i = 0; i < deque->size && i < size; ++i)\
+        {\
+            tmp[i] = *get_deque_##type(deque, i);\
+        }\
+\
+        if (deque->size > size)\
+        {\
+            deque->size = size;\
+            for (size_t i = deque->size; i < size; ++i)\
+            {\
+                deleter(get_deque_##type(deque, i), NULL);\
+            }\
+        }\
+        deque->capacity = size;\
+        free(deque->data);\
+        deque->data = tmp;\
+        deque->start = 0;\
+    }\
+}\
+\
+int is_valid_deque_##type(struct deque_##type* deque)\
+{\
+    return deque->data != NULL;\
+}\
+\
+int is_empty_deque_##type(struct deque_##type* deque)\
+{\
+    return deque->size == 0;\
+}\
+\
+int push_front_deque_##type(struct deque_##type* deque, st_type data, void (*deleter)(st_type*, void*))\
+{\
+    if (deque->capacity <= deque->size + 1)\
+    {\
+        realloc_deque_##type(deque, deque->size * 2, deleter);\
+    }\
+    if (is_valid_deque_##type(deque))\
+    {\
+        if (deque->start == 0)\
+            deque->start = deque->capacity - 1;\
+        else\
+            --deque->start;\
+        *get_deque_##type(deque, 0) = data;\
+        ++deque->size;\
+        return 1;\
+    }\
+    return 0;\
+}\
+\
+int push_back_deque_##type(struct deque_##type* deque, st_type data, void (*deleter)(st_type*, void*))\
+{\
+    if (deque->capacity <= deque->size + 1)\
+    {\
+        realloc_deque_##type(deque, deque->size * 2, deleter);\
+    }\
+    if (is_valid_deque_##type(deque))\
+    {\
+        *get_deque_##type(deque, deque->size) = data;\
+        ++deque->size;\
+        return 1;\
+    }\
+    return 0;\
+}\
+\
+st_type* front_deque_##type(struct deque_##type* deque)\
+{\
+    if (deque->size == 0)\
+        return NULL;\
+    else\
+        return get_deque_##type(deque, 0);\
+}\
+\
+st_type* back_deque_##type(struct deque_##type* deque)\
+{\
+    if (deque->size == 0)\
+        return NULL;\
+    else\
+        return get_deque_##type(deque, deque->size - 1);\
+}\
+\
+void pop_front_deque_##type(struct deque_##type* deque)\
+{\
+    if (deque->size != 0)\
+    {\
+        --deque->size;\
+        if (deque->start == deque->capacity - 1)\
+            deque->start = 0;\
+        else\
+            ++deque->start;\
+    }\
+}\
+\
+void pop_back_deque_##type(struct deque_##type* deque)\
+{\
+    if (deque->size != 0)\
+    {\
+        --deque->size;\
+    }\
+}\
 
 #endif //LAB3_STRUCTS_H

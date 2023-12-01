@@ -69,6 +69,39 @@ struct String init_string_from_stream(FILE* stream, int (*is_needed_sym)(int))
     return res;
 }
 
+struct String init_string_from_stream_no_skip(FILE* stream, int (*is_needed_sym)(int))
+{
+    struct String res;
+    res.data = malloc(sizeof(char) * 10);
+    res.data[0] = '\0';
+    res.size = 0;
+    if (res.data != NULL)
+    {
+        res.capacity = 10;
+    } else
+    {
+        res.capacity = 0;
+        return res;
+    }
+
+    char c;
+
+    fscanf(stream, "%c", &c);
+
+    while (is_needed_sym(c))
+    {
+        push_string_c(&res, c);
+        if (!is_valid_string(&res))
+        {
+            destroy_string(&res);
+            return res;
+        }
+        fscanf(stream, "%c", &c);
+    }
+
+    return res;
+}
+
 void destroy_string(struct String *data)
 {
     if (data->data != NULL)
