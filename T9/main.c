@@ -399,7 +399,7 @@ void get_first_rec(struct node* root, struct array* res)
 void array_insert(struct array* res, struct item data)
 {
     int counter = 0;
-    while (counter < res->size && data.length <= res->data[counter].length)
+    while (counter < res->size && data.count <= res->data[counter].count)
         ++counter;
 
     if (counter == res->capacity)
