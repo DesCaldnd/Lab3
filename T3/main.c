@@ -127,7 +127,7 @@ void print_file(struct Employee* data, void* opt)
 
 int employee_less(const void* lhs, const void* rhs)
 {
-    struct Employee* l = lhs, *r = rhs;
+    const struct Employee* l = lhs, *r = rhs;
     if (fabs(r->salary - l->salary) > EPS)
         return l->salary < r->salary;
     int stat = strcmp(l->surname.data, r->surname.data);
@@ -142,7 +142,7 @@ int employee_less(const void* lhs, const void* rhs)
 
 int employee_greater(const void* lhs, const void* rhs)
 {
-    struct Employee* l = lhs, *r = rhs;
+    const struct Employee* l = lhs, *r = rhs;
     if (fabs(r->salary - l->salary) > EPS)
         return l->salary > r->salary;
     int stat = strcmp(l->surname.data, r->surname.data);

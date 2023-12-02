@@ -11,7 +11,7 @@ enum command_type
 { FIND, EDIT, INSERT, REMOVE, PRINT, PRINT_ALL, UNDO, QUIT, UNDEF };
 
 enum key_type
-{ SURNAME, NAME, FATHERNAME, DATE, UNDEFINED };
+{ SURNAME, NAME, FATHERNAME, DATE, SALARY, UNDEFINED };
 
 struct Date
 {
@@ -32,6 +32,7 @@ union Backup
 {
     struct String string;
     struct Date date;
+    double salary;
 };
 
 struct Edit_t
@@ -87,6 +88,7 @@ int surname_eq(struct Liver lhs, struct Liver rhs);
 int name_eq(struct Liver lhs, struct Liver rhs);
 int fathername_eq(struct Liver lhs, struct Liver rhs);
 int date_eq(struct Liver lhs, struct Liver rhs);
+int salary_eq(struct Liver lhs, struct Liver rhs);
 
 void push_operation(struct deque_oper* deque, struct Operation);
 void destroy_undo(struct Operation* oper, void*);
@@ -323,6 +325,8 @@ enum key_type get_key_type(char* str)
         return FATHERNAME;
     else if (strcmp(str, "date") == 0)
         return DATE;
+    else if (strcmp(str, "salary") == 0)
+        return SALARY;
     else
         return UNDEFINED;
 }
@@ -377,10 +381,11 @@ void find(struct list_liver* list, struct deque_oper* deque)
             node = find_list_liver(*list, liver, &date_eq);
             break;
         }
-        default:
+        case SALARY:
         {
-            printf("Incorrect key\n");
-            return;
+            scanf("%lf", &liver.salary);
+            node = find_list_liver(*list, liver, &salary_eq);
+            break;
         }
     }
 
@@ -487,6 +492,7 @@ void undo(struct deque_oper* deque, struct list_liver* list)
 {
     if (!is_empty_deque_oper(deque))
     {
+        --N;
         back_deque_oper(deque)->undo(&back_deque_oper(deque)->data, list);
         back_deque_oper(deque)->delete(&back_deque_oper(deque)->data);
         pop_back_deque_oper(deque);
@@ -562,6 +568,16 @@ void edit(struct node_liver* liver, struct list_liver* list, struct deque_oper* 
             oper.data.edit.backup.date = tmp;
             break;
         }
+        case SALARY:
+        {
+            printf("Enter salary: ");
+            double salary;
+            scanf("%lf", &salary);
+            double tmp = liver->data.salary;
+            liver->data.salary = salary;
+            oper.data.edit.backup.salary = tmp;
+            break;
+        }
         default:
         {
             printf("Incorrect key\n");
@@ -624,11 +640,19 @@ int date_eq(struct Liver lhs, struct Liver rhs)
     return lhs.b.day == rhs.b.day && lhs.b.month == rhs.b.month &&lhs.b.year == rhs.b.year;
 }
 
+int salary_eq(struct Liver lhs, struct Liver rhs)
+{
+    return lhs.salary == rhs.salary;
+}
+
 void push_operation(struct deque_oper* deque, struct Operation oper)
 {
-    if (N % 2 == 1)
-        pop_front_deque_oper(deque);
     ++N;
+    if (N / 2 < deque->size && !is_empty_deque_oper(deque))
+    {
+        destroy_undo(front_deque_oper(deque), NULL);
+        pop_front_deque_oper(deque);
+    }
     push_back_deque_oper(deque, oper, &destroy_undo);
 }
 
@@ -674,6 +698,11 @@ void undo_edit(union Op_data* data, struct list_liver* list)
             node->data.b = data->edit.backup.date;
             break;
         }
+        case SALARY:
+        {
+            node->data.salary = data->edit.backup.salary;
+            break;
+        }
     }
 }
 
@@ -681,7 +710,7 @@ void undo_insert(union Op_data* data, struct list_liver* list)
 {
     struct node_liver* node = list->begin;
 
-    for (size_t i = 0; i < data->edit.id; ++i)
+    for (size_t i = 0; i < data->insert.id; ++i)
     {
         node = node->next;
     }
@@ -700,13 +729,13 @@ void undo_remove(union Op_data* data, struct list_liver* list)
 
 void delete_edit(union Op_data* data)
 {
-    if (data->edit.key != DATE)
+    if (data->edit.key != DATE && data->edit.key != SALARY)
     {
         destroy_string(&data->edit.backup.string);
     }
 }
 
-void delete_insert(union Op_data* data)
+void delete_insert(union Op_data*)
 {
 
 }

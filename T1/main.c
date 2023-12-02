@@ -18,7 +18,7 @@ int main()
     int num, r;
     scanf("%d %d", &num, &r);
 
-    while(true)
+    while(1)
     {
         enum error_code status;
         struct String str = to_r_radix(num, r, &status);
