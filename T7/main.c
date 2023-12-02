@@ -81,7 +81,7 @@ void find(struct list_liver* list, struct deque_oper* deque);
 void insert(struct list_liver* list, struct deque_oper* deque);
 void print(struct list_liver* list);
 void undo(struct deque_oper* deque, struct list_liver*);
-void edit(struct node_liver* liver, struct list_liver* list, struct deque_oper* deque);
+void edit(struct node_liver** liver, struct list_liver* list, struct deque_oper* deque);
 void remove_(struct node_liver* liver, struct list_liver* list, struct deque_oper* deque);
 
 int surname_eq(struct Liver lhs, struct Liver rhs);
@@ -101,8 +101,6 @@ void delete_remove(union Op_data* data);
 
 enum command_type get_command_type(char* str);
 enum key_type get_key_type(char* str);
-
-size_t N = 0;
 
 int main(int argc, char *argv[])
 {
@@ -401,13 +399,13 @@ void find(struct list_liver* list, struct deque_oper* deque)
     scanf("%19s", key);
     enum command_type command = get_command_type(key);
 
-    while (command != QUIT)
+    while (command != QUIT &&node != NULL)
     {
         switch (command)
         {
             case EDIT:
             {
-                edit(node, list, deque);
+                edit(&node, list, deque);
                 break;
             }
             case REMOVE:
@@ -492,7 +490,6 @@ void undo(struct deque_oper* deque, struct list_liver* list)
 {
     if (!is_empty_deque_oper(deque))
     {
-        --N;
         back_deque_oper(deque)->undo(&back_deque_oper(deque)->data, list);
         back_deque_oper(deque)->delete(&back_deque_oper(deque)->data);
         pop_back_deque_oper(deque);
@@ -501,7 +498,7 @@ void undo(struct deque_oper* deque, struct list_liver* list)
         printf("Nothing to undo\n");
 }
 
-void edit(struct node_liver* liver, struct list_liver* list, struct deque_oper* deque)
+void edit(struct node_liver** liver, struct list_liver* list, struct deque_oper* deque)
 {
     char key[20];
     printf("Enter key: ");
@@ -512,7 +509,6 @@ void edit(struct node_liver* liver, struct list_liver* list, struct deque_oper* 
     oper.undo = &undo_edit;
     oper.delete = &delete_edit;
     oper.data.edit.key = type;
-    oper.data.edit.id = get_id(list, liver);
 
     switch (type)
     {
@@ -525,8 +521,8 @@ void edit(struct node_liver* liver, struct list_liver* list, struct deque_oper* 
                 printf("Bad alloc\n");
                 return;
             }
-            struct String tmp = liver->data.surname;
-            liver->data.surname = str;
+            struct String tmp = (*liver)->data.surname;
+			(*liver)->data.surname = str;
             oper.data.edit.backup.string = tmp;
             break;
         }
@@ -539,8 +535,8 @@ void edit(struct node_liver* liver, struct list_liver* list, struct deque_oper* 
                 printf("Bad alloc\n");
                 return;
             }
-            struct String tmp = liver->data.name;
-            liver->data.name = str;
+            struct String tmp = (*liver)->data.name;
+			(*liver)->data.name = str;
             oper.data.edit.backup.string = tmp;
             break;
         }
@@ -553,8 +549,8 @@ void edit(struct node_liver* liver, struct list_liver* list, struct deque_oper* 
                 printf("Bad alloc\n");
                 return;
             }
-            struct String tmp = liver->data.fathername;
-            liver->data.fathername = str;
+            struct String tmp = (*liver)->data.fathername;
+			(*liver)->data.fathername = str;
             oper.data.edit.backup.string = tmp;
             break;
         }
@@ -563,9 +559,23 @@ void edit(struct node_liver* liver, struct list_liver* list, struct deque_oper* 
             printf("Enter date: ");
             struct Date b;
             scanf("%zu.%zu.%zu", &b.day, &b.month, &b.year);
-            struct Date tmp = liver->data.b;
-            liver->data.b = b;
+            struct Date tmp = (*liver)->data.b;
+			(*liver)->data.b = b;
             oper.data.edit.backup.date = tmp;
+			struct Liver backup_liver = (*liver)->data;
+			struct node_liver* node = list->begin;
+			while (node != NULL && node->next != *liver)
+				node = node->next;
+
+			if (node != NULL)
+			{
+				remove_list_liver(node);
+				*liver = insert_liver(list, backup_liver);
+				if (*liver != NULL)
+				{
+					*liver = (*liver)->next;
+				}
+			}
             break;
         }
         case SALARY:
@@ -573,8 +583,8 @@ void edit(struct node_liver* liver, struct list_liver* list, struct deque_oper* 
             printf("Enter salary: ");
             double salary;
             scanf("%lf", &salary);
-            double tmp = liver->data.salary;
-            liver->data.salary = salary;
+            double tmp = (*liver)->data.salary;
+			(*liver)->data.salary = salary;
             oper.data.edit.backup.salary = tmp;
             break;
         }
@@ -585,6 +595,7 @@ void edit(struct node_liver* liver, struct list_liver* list, struct deque_oper* 
         }
     }
 
+	oper.data.edit.id = get_id(list, *liver);
     push_operation(deque, oper);
 }
 
@@ -647,12 +658,6 @@ int salary_eq(struct Liver lhs, struct Liver rhs)
 
 void push_operation(struct deque_oper* deque, struct Operation oper)
 {
-    ++N;
-    if (N / 2 < deque->size && !is_empty_deque_oper(deque))
-    {
-        destroy_undo(front_deque_oper(deque), NULL);
-        pop_front_deque_oper(deque);
-    }
     push_back_deque_oper(deque, oper, &destroy_undo);
 }
 
@@ -663,11 +668,12 @@ void destroy_undo(struct Operation* oper, void*)
 
 void undo_edit(union Op_data* data, struct list_liver* list)
 {
-    struct node_liver* node = list->begin->next;
+    struct node_liver* node = list->begin->next, *prev = list->begin;
 
     for (size_t i = 0; i < data->edit.id; ++i)
     {
         node = node->next;
+		prev = prev->next;
     }
 
     switch (data->edit.key)
@@ -696,6 +702,11 @@ void undo_edit(union Op_data* data, struct list_liver* list)
         case DATE:
         {
             node->data.b = data->edit.backup.date;
+			struct Liver backup_liver = node->data;
+
+			remove_list_liver(prev);
+			insert_liver(list, backup_liver);
+
             break;
         }
         case SALARY:
