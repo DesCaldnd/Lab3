@@ -256,8 +256,8 @@ void create_mail(struct Post* post, char* id)
 
     struct tm *current = localtime(&cur_tume);
 
-    sprintf(mail.creation_time, "%2d:%2d:%4d %2d:%2d:%2d", current->tm_mday, current->tm_mon, current->tm_year + 1900, current->tm_hour, current->tm_min, current->tm_sec);
-    sprintf(mail.recieve_time, "%2d:%2d:%4d %2d:%2d:%2d", day, month, year, hour, minute, second);
+    sprintf(mail.creation_time, "%02d:%02d:%04d %02d:%02d:%02d", current->tm_mday, current->tm_mon, current->tm_year + 1900, current->tm_hour, current->tm_min, current->tm_sec);
+    sprintf(mail.recieve_time, "%02d:%02d:%04d %02d:%02d:%02d", day, month, year, hour, minute, second);
     mail.recieved = 0;
     strcpy(mail.post_id, id);
     increment_post_id(id);
