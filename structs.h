@@ -433,6 +433,12 @@ void pop_back_deque_##type(struct deque_##type* deque)\
     {\
         --deque->size;\
     }\
-}\
+}                                               \
+
+#define PAIR(f_type, fs_type, s_type, ss_type) struct pair_##f_type##s_type \
+{\
+    fs_type first;                                                           \
+    ss_type second;\
+};\
 
 #endif //LAB3_STRUCTS_H

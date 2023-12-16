@@ -55,7 +55,7 @@ struct String init_string_from_stream(FILE* stream, int (*is_needed_sym)(int))
     while (!is_needed_sym(c) && c != EOF && c != '\0')
         fscanf(stream, "%c", &c);
 
-    while (is_needed_sym(c))
+    while (is_needed_sym(c) && !feof(stream))
     {
         push_string_c(&res, c);
         if (!is_valid_string(&res))
