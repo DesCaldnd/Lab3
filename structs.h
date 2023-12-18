@@ -73,6 +73,30 @@ void destroy_list_##type(struct list_##type *list)                          \
     list->begin = NULL;                                                 \
 }                                                \
                                                  \
+struct list_##type copy_list_##type(const struct list_##type src)            \
+{                                                \
+    struct list_##type result = init_list_##type();                          \
+    if (!is_list_valid_##type(result))           \
+        return result;                           \
+                                                 \
+    struct node_##type* it = src.begin->next, *inserter = result.begin;    \
+                                                 \
+    while (it != NULL)                           \
+    {                                            \
+        inserter = insert_list_##type(inserter, it->data);                   \
+                                                 \
+        if (inserter == NULL)                    \
+        {                                        \
+            destroy_list_##type(&result);        \
+            return result;\
+        }\
+                                                 \
+        it = it->next;\
+    }                                            \
+                                                 \
+    return result;\
+}\
+                                                 \
 int size_list_##type(struct list_##type list)    \
 {                                                \
     int res = 0;                                 \
@@ -258,6 +282,8 @@ struct String init_string(const char *src);
 struct String init_string_size(size_t size);
 
 struct String init_string_from_stream(FILE* stream, int (*is_needed_sym)(int));
+
+struct String init_string_from_stream_buf(FILE* stream, char* buf, int (*is_needed_sym)(int), int (*no_skip_sym)(int));
 
 struct String init_string_from_stream_no_skip(FILE* stream, int (*is_needed_sym)(int));
 

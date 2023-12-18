@@ -4,7 +4,6 @@
 #include "structs.h"
 #include <string.h>
 #include <stdlib.h>
-#include <minmax.h>
 
 struct String init_string(const char* src)
 {
@@ -66,6 +65,43 @@ struct String init_string_from_stream(FILE* stream, int (*is_needed_sym)(int))
         fscanf(stream, "%c", &c);
     }
 
+    return res;
+}
+
+struct String init_string_from_stream_buf(FILE* stream, char* buf, int (*is_needed_sym)(int), int (*no_skip_sym)(int))
+{
+    struct String res;
+    res.data = malloc(sizeof(char) * 10);
+    res.size = 0;
+    if (res.data != NULL)
+    {
+        res.capacity = 10;
+    } else
+    {
+        *buf = 0;
+        res.capacity = 0;
+        return res;
+    }
+
+    char c;
+
+    fscanf(stream, "%c", &c);
+    while (!is_needed_sym(c) && c != EOF && c != '\0' && !no_skip_sym(c) && !feof(stream))
+        fscanf(stream, "%c", &c);
+
+    while (is_needed_sym(c) && !feof(stream))
+    {
+        push_string_c(&res, c);
+        if (!is_valid_string(&res))
+        {
+            *buf = c;
+            destroy_string(&res);
+            return res;
+        }
+        fscanf(stream, "%c", &c);
+    }
+
+    *buf = c;
     return res;
 }
 
@@ -155,7 +191,7 @@ void cat_string(struct String* dest, const struct String* src)
 {
     if (dest->size + src->size > dest->capacity - 1)
     {
-        realloc_string(dest, dest->size + src->size + min(dest->size, src->size) + 1);
+        realloc_string(dest, dest->size + src->size + (dest->size < src->size ? dest->size : src->size) + 1);
     }
     if (is_valid_string(dest))
     {

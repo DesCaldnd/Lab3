@@ -13,5 +13,8 @@ add_executable(Task4 T4/main.c structs.h structs.c)
 add_executable(Task5 T5/main.c structs.h structs.c)
 add_executable(Task6 structs.h T6/main.c)
 add_executable(Task7 T7/main.c structs.h structs.c)
+add_executable(Task8 T8/main.c structs.h structs.c)
 add_executable(Task9 T9/main.c)
 add_executable(Task10 T10/main.c structs.h structs.c)
+
+target_link_libraries(Task8 m)

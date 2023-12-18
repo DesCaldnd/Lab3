@@ -1,0 +1,5 @@
+%s\tgrsrhy
+[\zdtrj
+        zdtj
+rdzh ]
+Cmps(x^3-12x^2-42,x-3);
